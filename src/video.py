@@ -44,12 +44,7 @@ def worker(input_q, output_q, cap_params, frame_processed, movement):
             # draw bounding boxes
             if any(centers):
                 # Calculate amount moved
-                if not all(centers) or not all(old_centers): # Only one hand detectede in either graph
-                    moved = calculate_movement(old_centers[0], centers[0])
-                else:
-                    moved = calculate_movement(old_centers[0], centers[0])
-                    moved += calculate_movement(old_centers[1], centers[1])
-
+                moved = calculate_movement(old_centers[0], centers[0])
                 with movement.get_lock():
                     movement.value += moved
                 
@@ -159,6 +154,7 @@ if __name__ == '__main__':
     old_movement = 0
     history_avg = 4
     move_history = [0] * history_avg 
+    total_space = args.width + args.height
 
     cv2.namedWindow('Multi-Threaded Detection', cv2.WINDOW_NORMAL)
 
@@ -177,9 +173,10 @@ if __name__ == '__main__':
         fps = num_frames / elapsed_time
 
         # Calculate amount moved in the last 5 frames
-        if num_frames % 5 == 0:
+        frame_rate = 5
+        if num_frames % frame_rate == 0:
             cur_movement = movement.value
-            moved = cur_movement - old_movement
+            moved = (cur_movement - old_movement) / frame_rate
             old_movement = cur_movement
             
             # Track historical movement
@@ -189,7 +186,7 @@ if __name__ == '__main__':
             for i in range(len(move_history)-history_avg, len(move_history)):
                 total += move_history[i]
             
-            moved_avg = total / history_avg
+            moved_avg = ((total / history_avg) / total_space) * 1000 
             print("Movement score: {}".format(moved_avg))
 
         # print("frame ",  index, num_frames, elapsed_time, fps)

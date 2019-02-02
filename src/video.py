@@ -72,7 +72,8 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
                     moved = min(moved1, moved2, moved3)
 
                 if moved > movement_threshold:
-                    moved = 0
+                    # moved = 0
+                    pass
 
                 with movement.get_lock():
                     movement.value += moved
@@ -171,7 +172,7 @@ if __name__ == '__main__':
     print(cap_params, args)
 
     movement = Value('i', 0)
-    movement_threshold = (args.width + args.height) / 5
+    movement_threshold = (args.width + args.height) / 3
 
     # spin up workers to paralleize detection.
     pool = Pool(args.num_workers, worker,

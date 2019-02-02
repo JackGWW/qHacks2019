@@ -157,7 +157,7 @@ def listen_print_loop(responses):
             old_start = start
             start = time.time()
             # append cur_bad_words to bad_words
-            for key, value in cur_bad_words.iteritems():
+            for key, value in cur_bad_words.items():
                 total_bad_words[key] += value
 
             print(transcript + overwrite_chars)
@@ -184,7 +184,7 @@ def listen_print_loop(responses):
 
             num_chars_printed = 0
     print(total_bad_words)
-    for m in total_bad_words.itervalues():
+    for m in total_bad_words.values():
         WORD_COUNT += m
     print(WORD_COUNT)
 

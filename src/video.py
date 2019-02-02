@@ -118,11 +118,7 @@ def main():
     cap_params['num_hands_detect'] = num_hands
 
     movement = Value('i', 0)
-<<<<<<< HEAD
-    movement_threshold = (width + height) / 5
-=======
-    movement_threshold = (args.width + args.height) / 3
->>>>>>> cf223e9b992a4ff0531ed5f7a326c02e9f6f0946
+    movement_threshold = (width + height) / 3
 
     # spin up workers to paralleize detection.
     pool = Pool(num_workers, worker,

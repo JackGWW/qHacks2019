@@ -1,5 +1,5 @@
 # All audio processing
-# Connect to GCP speech to text streaming api	
+# Connect to GCP speech to text streaming api
 
 # Output:
 # Words/minute
@@ -27,7 +27,7 @@ def run_quickstart():
     # [START speech_quickstart]
     import io
     import os
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "C:\\Users\\jackw\\Documents\\GitHub\\qHacks2019\\gcp_credentials.json" 
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/jnaylor/Documents/QHacks2019Local/gcpcredentialsnaylor.json"
     # Imports the Google Cloud client library
     # [START speech_python_migration_imports]
     from google.cloud import speech

@@ -15,7 +15,6 @@ score_thresh = 0.2
 # does detection on images in an input queue and puts it on an output queue
 
 def calculate_movement(old, cur):
-    # TODO - normalize for video resolution
     if old is None:
         return 0
 
@@ -75,7 +74,7 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
                     moved = 0
 
                 with movement.get_lock():
-                    movement.value += moved
+                    movement.value += int(moved)
                 
                 old_centers = centers
             
@@ -93,72 +92,21 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
     sess.close()
 
 
-if __name__ == '__main__':
+def main():
+    video_source = 0
+    num_hands = 2
+    fps = 1  # set to 0 to hide
+    width = 300
+    height = 200
+    display = 1  # show detected hands
+    num_workers = 4
+    queue_size = 5
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-src',
-        '--source',
-        dest='video_source',
-        type=int,
-        default=0,
-        help='Device index of the camera.')
-    parser.add_argument(
-        '-nhands',
-        '--num_hands',
-        dest='num_hands',
-        type=int,
-        default=2,
-        help='Max number of hands to detect.')
-    parser.add_argument(
-        '-fps',
-        '--fps',
-        dest='fps',
-        type=int,
-        default=1,
-        help='Show FPS on detection/display visualization')
-    parser.add_argument(
-        '-wd',
-        '--width',
-        dest='width',
-        type=int,
-        default=300,
-        help='Width of the frames in the video stream.')
-    parser.add_argument(
-        '-ht',
-        '--height',
-        dest='height',
-        type=int,
-        default=200,
-        help='Height of the frames in the video stream.')
-    parser.add_argument(
-        '-ds',
-        '--display',
-        dest='display',
-        type=int,
-        default=1,
-        help='Display the detected images using OpenCV. This reduces FPS')
-    parser.add_argument(
-        '-num-w',
-        '--num-workers',
-        dest='num_workers',
-        type=int,
-        default=4,
-        help='Number of workers.')
-    parser.add_argument(
-        '-q-size',
-        '--queue-size',
-        dest='queue_size',
-        type=int,
-        default=5,
-        help='Size of the queue.')
-    args = parser.parse_args()
-
-    input_q = Queue(maxsize=args.queue_size)
-    output_q = Queue(maxsize=args.queue_size)
+    input_q = Queue(maxsize=queue_size)
+    output_q = Queue(maxsize=queue_size)
 
     video_capture = WebcamVideoStream(
-        src=args.video_source, width=args.width, height=args.height).start()
+        src=video_source, width=width, height=height).start()
 
     cap_params = {}
     frame_processed = 0
@@ -166,15 +114,13 @@ if __name__ == '__main__':
     cap_params['score_thresh'] = score_thresh
 
     # max number of hands we want to detect/track
-    cap_params['num_hands_detect'] = args.num_hands
-
-    print(cap_params, args)
+    cap_params['num_hands_detect'] = num_hands
 
     movement = Value('i', 0)
-    movement_threshold = (args.width + args.height) / 5
+    movement_threshold = (width + height) / 5
 
     # spin up workers to paralleize detection.
-    pool = Pool(args.num_workers, worker,
+    pool = Pool(num_workers, worker,
                 (input_q, output_q, cap_params, frame_processed, movement, movement_threshold))
 
     start_time = datetime.datetime.now()
@@ -184,7 +130,7 @@ if __name__ == '__main__':
     old_movement = 0
     history_avg = 4
     move_history = [0] * history_avg 
-    total_space = args.width + args.height
+    total_space = width + height
 
     cv2.namedWindow('Multi-Threaded Detection', cv2.WINDOW_NORMAL)
 
@@ -221,8 +167,8 @@ if __name__ == '__main__':
 
         # print("frame ",  index, num_frames, elapsed_time, fps)
         if (output_frame is not None):
-            if (args.display > 0):
-                if (args.fps > 0):
+            if (display > 0):
+                if (fps > 0):
                     detector_utils.draw_fps_on_image("FPS : " + str(int(fps)),
                                                      output_frame)
                 cv2.imshow('Multi-Threaded Detection', output_frame)
@@ -244,3 +190,7 @@ if __name__ == '__main__':
     pool.terminate()
     video_capture.stop()
     cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    main()

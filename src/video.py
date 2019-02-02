@@ -24,7 +24,7 @@ def calculate_movement(old, cur):
     return xmov + ymov
 
 
-def worker(input_q, output_q, cap_params, frame_processed, movement):
+def worker(input_q, output_q, cap_params, frame_processed, movement, movement_threshold):
     print(">> loading frozen model for worker")
     detection_graph, sess = detector_utils.load_inference_graph()
     sess = tf.Session(graph=detection_graph)
@@ -43,8 +43,31 @@ def worker(input_q, output_q, cap_params, frame_processed, movement):
 
             # draw bounding boxes
             if any(centers):
-                # Calculate amount moved
-                moved = calculate_movement(old_centers[0], centers[0])
+                # If both hands detected
+                if all(old_centers) and all(centers):
+                    moved1 = calculate_movement(old_centers[0], centers[0])
+                    moved2 = calculate_movement(old_centers[1], centers[0])
+                    moved = min(moved1, moved2)
+
+                # Try to match hand movement to closest hand postion before
+                else:
+                    moved1 = calculate_movement(old_centers[0], centers[0])
+                    
+                    if old_centers[1]:
+                        moved2 = calculate_movement(old_centers[1], centers[0])
+                    else:
+                        moved2 = 99999
+                    
+                    if centers[1]:
+                        moved3 = calculate_movement(old_centers[0], centers[1])
+                    else:
+                        moved3 = 99999
+
+                    moved = min(moved1, moved2, moved3)
+
+                if moved > movement_threshold:
+                    moved = 0
+
                 with movement.get_lock():
                     movement.value += moved
                 
@@ -142,10 +165,11 @@ if __name__ == '__main__':
     print(cap_params, args)
 
     movement = Value('i', 0)
+    movement_threshold = (args.width + args.height) / 5
 
     # spin up workers to paralleize detection.
     pool = Pool(args.num_workers, worker,
-                (input_q, output_q, cap_params, frame_processed, movement))
+                (input_q, output_q, cap_params, frame_processed, movement, movement_threshold))
 
     start_time = datetime.datetime.now()
     num_frames = 0

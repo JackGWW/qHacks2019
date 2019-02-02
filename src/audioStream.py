@@ -9,13 +9,15 @@ from google.cloud.speech import types
 import pyaudio
 from six.moves import queue
 import os
-import io
+import time
 
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/jnaylor/Documents/QHacks2019Local/gcpcredentialsnaylor.json"
+
+WORD_LIST = [' um', ' ah', 'like', ' so', ' you know', ' well basically', ' cuz']
 
 
 class MicrophoneStream(object):
@@ -99,6 +101,17 @@ def listen_print_loop(responses):
     final one, print a newline to preserve the finalized transcription.
     """
     num_chars_printed = 0
+    WORD_COUNT = 0
+    cur_bad_words = {}
+    total_bad_words = {}
+    start = time.time()
+    old_start = time.time()
+    words = 0
+    old_words = 0
+
+    for word in WORD_LIST:
+        cur_bad_words[word] = 0
+        total_bad_words[word] = 0
     for response in responses:
         if not response.results:
             continue
@@ -120,13 +133,33 @@ def listen_print_loop(responses):
         # some extra spaces to overwrite the previous result
         overwrite_chars = ' ' * (num_chars_printed - len(transcript))
 
+        # In the middle on a sentence
         if not result.is_final:
             sys.stdout.write(transcript + overwrite_chars + '\r')
             sys.stdout.flush()
 
-            num_chars_printed = len(transcript)
 
+            num_chars_printed = len(transcript)
+            for word in WORD_LIST:
+                cur_bad_words[word] = transcript.count(word)
+
+            words = len(transcript.split(' '))
+            total_time = time.time() - old_start
+            total_words = words + old_words
+
+            wpm = total_words / (total_time / 60)
+
+            print(wpm)
+
+        # End of sentence
         else:
+            old_words = words
+            old_start = start
+            start = time.time()
+            # append cur_bad_words to bad_words
+            for key, value in cur_bad_words.iteritems():
+                total_bad_words[key] += value
+
             print(transcript + overwrite_chars)
 
             # Exit recognition if any of the transcribed phrases could be
@@ -134,11 +167,30 @@ def listen_print_loop(responses):
             if re.search(r'\b(exit|quit)\b', transcript, re.I):
                 print('Exiting..')
                 break
+            # if re.search(r'\b(like|um|oz|ah)\b', transcript, re.I):
+            #     WORD_COUNT += 1
+            #     print(WORD_COUNT)
+
+            # for word in WORD_LIST:
+            #     if word in transcript:
+            #         WORD_COUNT += 1
+            #         print(WORD_COUNT)
+
+                # if word in transcript:
+                #     bad_words[word] += 1
+                #     WORD_COUNT += 1
+                #     print(word.upper())
+                #     print (WORD_COUNT)
 
             num_chars_printed = 0
+    print(total_bad_words)
+    for m in total_bad_words.itervalues():
+        WORD_COUNT += m
+    print(WORD_COUNT)
 
 
 def main():
+
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'en-US'  # a BCP-47 language tag

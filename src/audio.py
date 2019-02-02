@@ -24,7 +24,7 @@
 
 
 def run_quickstart():
-    # [START speech_quickstart]
+    # [START speech_quickstart
     import io
     import os
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/jnaylor/Documents/QHacks2019Local/gcpcredentialsnaylor.json"

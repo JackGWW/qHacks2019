@@ -2,7 +2,7 @@ from utils import detector_utils as detector_utils
 import cv2
 import tensorflow as tf
 import multiprocessing
-from multiprocessing import Queue, Pool
+from multiprocessing import Queue, Pool, Value
 import time
 from utils.detector_utils import WebcamVideoStream
 import datetime
@@ -14,11 +14,22 @@ score_thresh = 0.2
 # Create a worker thread that loads graph and
 # does detection on images in an input queue and puts it on an output queue
 
+def calculate_movement(old, cur):
+    # TODO - normalize for video resolution
+    if old is None:
+        return 0
 
-def worker(input_q, output_q, cap_params, frame_processed):
+    xmov = abs(old[0] - cur[0])
+    ymov = abs(old[1] - cur[1])
+    return xmov + ymov
+
+
+def worker(input_q, output_q, cap_params, frame_processed, movement):
     print(">> loading frozen model for worker")
     detection_graph, sess = detector_utils.load_inference_graph()
     sess = tf.Session(graph=detection_graph)
+    old_centers = [None] * cap_params["num_hands_detect"]
+    centers = [None] * cap_params["num_hands_detect"]
     while True:
         #print("> ===== in worker loop, frame ", frame_processed)
         frame = input_q.get()
@@ -29,25 +40,26 @@ def worker(input_q, output_q, cap_params, frame_processed):
 
             boxes, scores = detector_utils.detect_objects(
                 frame, detection_graph, sess)
+
             # draw bounding boxes
-            ret2 = detector_utils.draw_box_on_image(
-                2, cap_params["score_thresh"],
-                scores, boxes, cap_params['im_width'], cap_params['im_height'],
-                frame)
+            if any(centers):
+                # Calculate amount moved
+                if not all(centers) or not all(old_centers): # Only one hand detectede in either graph
+                    moved = calculate_movement(old_centers[0], centers[0])
+                else:
+                    moved = calculate_movement(old_centers[0], centers[0])
+                    moved += calculate_movement(old_centers[1], centers[1])
 
-            ret1 = detector_utils.draw_box_on_image(
-                0, cap_params["score_thresh"],
-                scores, boxes, cap_params['im_width'], cap_params['im_height'],
-                frame)
+                with movement.get_lock():
+                    movement.value += moved
+                
+                old_centers = centers
+            
+            centers = detector_utils.draw_box_on_image(
+                      cap_params["num_hands_detect"], cap_params["score_thresh"],
+                      scores, boxes, cap_params['im_width'], cap_params['im_height'],
+                      frame)
 
-            ret0 = detector_utils.draw_box_on_image(
-                1, cap_params["score_thresh"],
-                scores, boxes, cap_params['im_width'], cap_params['im_height'],
-                frame)
-
-
-            # print("{} --- {}".format(boxes, scores))
-            print("1:{}  2:{}  3:{}".format(ret0, ret1, ret2))
 
             # add frame annotated with bounding box to queue
             output_q.put(frame)
@@ -134,14 +146,19 @@ if __name__ == '__main__':
 
     print(cap_params, args)
 
+    movement = Value('i', 0)
+
     # spin up workers to paralleize detection.
     pool = Pool(args.num_workers, worker,
-                (input_q, output_q, cap_params, frame_processed))
+                (input_q, output_q, cap_params, frame_processed, movement))
 
     start_time = datetime.datetime.now()
     num_frames = 0
     fps = 0
     index = 0
+    old_movement = 0
+    history_avg = 4
+    move_history = [0] * history_avg 
 
     cv2.namedWindow('Multi-Threaded Detection', cv2.WINDOW_NORMAL)
 
@@ -158,8 +175,24 @@ if __name__ == '__main__':
         elapsed_time = (datetime.datetime.now() - start_time).total_seconds()
         num_frames += 1
         fps = num_frames / elapsed_time
-        # print("frame ",  index, num_frames, elapsed_time, fps)
 
+        # Calculate amount moved in the last 5 frames
+        if num_frames % 5 == 0:
+            cur_movement = movement.value
+            moved = cur_movement - old_movement
+            old_movement = cur_movement
+            
+            # Track historical movement
+            move_history.append(moved)
+            
+            total = 0
+            for i in range(len(move_history)-history_avg, len(move_history)):
+                total += move_history[i]
+            
+            moved_avg = total / history_avg
+            print("Movement score: {}".format(moved_avg))
+
+        # print("frame ",  index, num_frames, elapsed_time, fps)
         if (output_frame is not None):
             if (args.display > 0):
                 if (args.fps > 0):

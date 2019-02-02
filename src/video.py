@@ -46,7 +46,13 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
                 # If both hands detected
                 if all(old_centers) and all(centers):
                     moved1 = calculate_movement(old_centers[0], centers[0])
+                    moved1 += calculate_movement(old_centers[1], centers[1])
+                    moved1 = moved1 / 2
+
                     moved2 = calculate_movement(old_centers[1], centers[0])
+                    moved2 += calculate_movement(old_centers[0], centers[1])
+                    moved2 = moved2 / 2
+
                     moved = min(moved1, moved2)
 
                 # Try to match hand movement to closest hand postion before

@@ -187,6 +187,7 @@ def listen_print_loop(responses):
     for m in total_bad_words.values():
         WORD_COUNT += m
     print(WORD_COUNT)
+    return wpm
 
 
 def main():

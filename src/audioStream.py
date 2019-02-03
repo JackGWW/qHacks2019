@@ -99,9 +99,7 @@ class AudioGenerator(threading.Thread):
 
 
     def get_wpm(self):
-        with self.lock:
-            print (self.wpm)
-            return self.wpm
+        return self.wpm
 
     def get_crutch(self):
         with self.lock:
@@ -172,8 +170,8 @@ class AudioGenerator(threading.Thread):
 
                     # In the middle on a sentence
                     if not result.is_final:
-                        sys.stdout.write(transcript + overwrite_chars + '\r')
-                        sys.stdout.flush()
+                        # sys.stdout.write(transcript + overwrite_chars + '\r')
+                        # sys.stdout.flush()
 
 
                         num_chars_printed = len(transcript)
@@ -185,10 +183,10 @@ class AudioGenerator(threading.Thread):
                         total_words = words + old_words
 
                         
-                        with self.lock:
-                            self.wpm =  total_words / (total_time / 60)
-                            self.t = transcript
-                            self.crutch = cur_bad_words
+                        # with self.lock:
+                        self.wpm =  total_words / (total_time / 60)
+                        self.t = transcript
+                        self.crutch = cur_bad_words
 
                     # End of sentence
                     else:
@@ -201,3 +199,8 @@ class AudioGenerator(threading.Thread):
                 pass
 
 
+if __name__ == '__main__':
+    ag = AudioGenerator()
+    ag.start_stream()
+    while True:
+        print("WPM: {}  Transcript:{}".format(ag.get_wpm, ag.get_transcript))

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>Stage Fight</title>
+<title>SpeakEasy</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -27,7 +27,7 @@
       <div class="w3-third">
           <div class="w3-card w3-container" style="min-height:340px">
           <h3></h3><br>
-          <img/>
+          <!--<img src="{{ url_for('video_stream') }}">-->
       </div>
 <!--       <div class="w3-card w3-container" style="min-height:240px">
         <svg preserveAspectRatio="none" id="visualizer" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -88,7 +88,7 @@
 
   <div class="w3-third">
     <div class="w3-card w3-container" style="min-height:340px">
-      <h3>Hello</h3><br>
+      <h4><p id="transcript"></p></h4><br>
       <img/>
     </div>
   </div>
@@ -118,7 +118,7 @@
           <th>Number of Times Said</th> 
         </tr>
         <tr align="center">
-          <td>Well</td>
+          <td><h4><p id="like"></p></h4></td>
           <td>4</td>
         </tr>
         <tr align="center">
@@ -172,9 +172,17 @@
         chart.draw(data, options);
 
         setInterval(function() {
-          data.setValue(0, 1, 40 + Math.round(60 * Math.random()));
-          chart.draw(data, options);
-        }, 13000);
+           var req = new XMLHttpRequest();
+           req.responseType = 'json';
+           req.open('GET',"{{ url_for('get_movement') }}", true);
+           req.onload  = function() {
+           var jsonResponse = req.response;
+           var movement = parseInt(jsonResponse['movement'])
+           data.setValue(0, 1, movement);
+           chart.draw(data, options);
+              };
+      req.send(null);
+        }, 2000);
       }
     </script>
 
@@ -202,9 +210,17 @@
         chart.draw(data, options);
 
         setInterval(function() {
-          data.setValue(0, 1, 40 + Math.round(60 * Math.random()));
-          chart.draw(data, options);
-        }, 13000);
+           var req = new XMLHttpRequest();
+           req.responseType = 'json';
+           req.open('GET',"{{ url_for('get_wpm') }}", true);
+           req.onload  = function() {
+           var jsonResponse = req.response;
+           var wpm = parseInt(jsonResponse['wpm'])
+           data.setValue(0, 1, wpm);
+           chart.draw(data, options);
+              };
+      req.send(null);
+        }, 400);
       }
     </script>
 
@@ -220,144 +236,39 @@ function startThreads() {
     xhr.open('POST', 'http://localhost:5000/start');
     xhr.send();
 }
-// function stopThreads() {
-//     var xhr = new XMLHttpRequest();
-//     xhr.onreadystatechange = function () {
-//         if (xhr.readyState === 4) {
-//             console.log(xhr.response);
-//         }
-//     }
-//     xhr.open('POST', 'http://localhost:5000/stop');
-//     xhr.send();
-// }
-// // Side navigation
-// function w3_open() {
-//   var x = document.getElementById("mySidebar");
-//   x.style.width = "100%";
-//   x.style.fontSize = "40px";
-//   x.style.paddingTop = "10%";
-//   x.style.display = "block";
-// }
-// function w3_close() {
-//   document.getElementById("mySidebar").style.display = "none";
-// }
-//
-// // Tabs
-// function openCity(evt, cityName) {
-//   var i;
-//   var x = document.getElementsByClassName("city");
-//   for (i = 0; i < x.length; i++) {
-//     x[i].style.display = "none";
-//   }
-//   var activebtn = document.getElementsByClassName("testbtn");
-//   for (i = 0; i < x.length; i++) {
-//     activebtn[i].className = activebtn[i].className.replace(" w3-dark-grey", "");
-//   }
-//   document.getElementById(cityName).style.display = "block";
-//   evt.currentTarget.className += " w3-dark-grey";
-// }
-//
-// var mybtn = document.getElementsByClassName("testbtn")[0];
-// mybtn.click();
-//
-// // Accordions
-// function myAccFunc(id) {
-//   var x = document.getElementById(id);
-//   if (x.className.indexOf("w3-show") == -1) {
-//     x.className += " w3-show";
-//   } else {
-//     x.className = x.className.replace(" w3-show", "");
-//   }
-// }
-//
-// // Slideshows
-// var slideIndex = 1;
-//
-// function plusDivs(n) {
-//   slideIndex = slideIndex + n;
-//   showDivs(slideIndex);
-// }
-//
-// function showDivs(n) {
-//   var x = document.getElementsByClassName("mySlides");
-//   if (n > x.length) {slideIndex = 1}
-//   if (n < 1) {slideIndex = x.length} ;
-//   for (i = 0; i < x.length; i++) {
-//     x[i].style.display = "none";
-//   }
-//   x[slideIndex-1].style.display = "block";
-// }
-//
-// showDivs(1);
-//
-// // Progress Bars
-// function move() {
-//   var elem = document.getElementById("myBar");
-//   var width = 5;
-//   var id = setInterval(frame, 10);
-//   function frame() {
-//     if (width == 100) {
-//       clearInterval(id);
-//     } else {
-//       width++;
-//       elem.style.width = width + '%';
-//       elem.innerHTML = width * 1  + '%';
-//     }
-//   }
-// }
-// audio
-window.onload = function () {
-    "use strict";
-    var paths = document.getElementsByTagName('path');
-    var visualizer = document.getElementById('visualizer');
-    var mask = visualizer.getElementById('mask');
-    var h = document.getElementsByTagName('h1')[0];
-    var path;
-    var report = 0;
-    var soundAllowed = function (stream) {
-        //Audio stops listening in FF without // window.persistAudioStream = stream;
-        //https://bugzilla.mozilla.org/show_bug.cgi?id=965483
-        //https://support.mozilla.org/en-US/questions/984179
-        window.persistAudioStream = stream;
-        h.innerHTML = "Thanks";
-        h.setAttribute('style', 'opacity: 0;');
-        var audioContent = new AudioContext();
-        var audioStream = audioContent.createMediaStreamSource( stream );
-        var analyser = audioContent.createAnalyser();
-        audioStream.connect(analyser);
-        analyser.fftSize = 1024;
-        var frequencyArray = new Uint8Array(analyser.frequencyBinCount);
-        visualizer.setAttribute('viewBox', '0 0 255 255');
-        //Through the frequencyArray has a length longer than 255, there seems to be no
-        //significant data after this point. Not worth visualizing.
-        for (var i = 0 ; i < 255; i++) {
-            path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('stroke-dasharray', '4,1');
-            mask.appendChild(path);
-        }
-        var doDraw = function () {
-            requestAnimationFrame(doDraw);
-            analyser.getByteFrequencyData(frequencyArray);
-            var adjustedLength;
-            for (var i = 0 ; i < 255; i++) {
-                adjustedLength = Math.floor(frequencyArray[i]) - (Math.floor(frequencyArray[i]) % 5);
-                paths[i].setAttribute('d', 'M '+ (i) +',255 l 0,-' + adjustedLength);
-            }
-        }
-        doDraw();
-    }
-    var soundNotAllowed = function (error) {
-        h.innerHTML = "You must allow your microphone.";
-        console.log(error);
-    }
-    /*window.navigator = window.navigator || {};
-    /*navigator.getUserMedia =  navigator.getUserMedia       ||
-                              navigator.webkitGetUserMedia ||
-                              navigator.mozGetUserMedia    ||
-                              null;*/
-    navigator.getUserMedia({audio:true}, soundAllowed, soundNotAllowed);
-};
 </script>
 
+<script>
+  var myVar = setInterval(getTranscript, 500);
+  var myVar = setInterval(getCrutch, 500);
+
+  function getTranscript() {
+    var req = new XMLHttpRequest();
+    req.responseType = 'json';
+    req.open('GET',"{{ url_for('get_transcript') }}", true);
+    req.onload  = function() {
+       var jsonResponse = req.response;
+       var transcript = jsonResponse['transcript']
+       document.getElementById("transcript").innerHTML = transcript;
+
+       // do something with jsonResponse
+    };
+    req.send(null);
+  }
+  function getCrutch() {
+    var req = new XMLHttpRequest();
+    req.responseType = 'json';
+    req.open('GET',"{{ url_for('get_crutch') }}", true);
+    req.onload  = function() {
+       var jsonResponse = req.response;
+       var crutch = jsonResponse['crutch']
+       var like = jsonResponse['like']
+       document.getElementById("like").innerHTML = like;
+
+       // do something with jsonResponse
+    };
+    req.send(null);
+  }
+</script>
 </body>
 </html>

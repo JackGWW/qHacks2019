@@ -118,17 +118,16 @@
           <th><h4>Number of Times Said</h4></th> 
         </tr>
         <tr align="center">
-<!--           <td><h4><p id="like"></p></h4></td> -->
           <td><h5>Like</h5></td>
-          <td><h5>4</h5></td>
+          <td><h4><p id="like"></p></h4></td>
         </tr>
         <tr align="center">
           <td><h5>Basically</h5></td>
-          <td><h5>2</h5></td>
+          <td><h4><p id="basically"></p></h4></td>
         </tr>
         <tr align="center">
-          <td><h5>Cuz</h5></td>
-          <td><h5>1</h5></td>
+          <td><h5>Stuff</h5></td>
+          <td><h4><p id="stuff"></p></h4></td>
         </tr>
        </table>    
      <!--  <p>[put the slider here]</p> -->
@@ -263,7 +262,12 @@ function startThreads() {
     req.onload  = function() {
        var jsonResponse = req.response;
        var crutch = jsonResponse['crutch']
-       var like = jsonResponse['like']
+       var like = crutch['like']
+       var stuff = crutch['stuff']
+       var basically = crutch['basically']
+
+       document.getElementById("basically").innerHTML = basically;
+       document.getElementById("stuff").innerHTML = stuff;
        document.getElementById("like").innerHTML = like;
 
        // do something with jsonResponse

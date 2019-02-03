@@ -10,14 +10,15 @@ import pyaudio
 from six.moves import queue
 import os
 import time
+import threading
 
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = "/Users/jnaylor/Documents/QHacks2019Local/gcpcredentialsnaylor.json"
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"C:\Users\jackw\Documents\GitHub\qHacks2019\src\gcpcredentialsnaylor.json"
 
-WORD_LIST = [' um', ' ah', 'like', ' so', ' you know', ' well basically', ' cuz']
+WORD_LIST = ['like', ' so', ' you know', ' basically', ' cuz', 'things', 'stuff', 'yeah']
 
 
 class MicrophoneStream(object):
@@ -85,136 +86,118 @@ class MicrophoneStream(object):
             yield b''.join(data)
 
 
-def listen_print_loop(responses):
-    """Iterates through server responses and prints them.
+class AudioGenerator(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.daemon = True  # OK for main to exit even if instance still running
+        self.lock = threading.Lock()
+        self.wpm = 0
+        self.t = ''
+        self.crutch = {}
 
-    The responses passed is a generator that will block until a response
-    is provided by the server.
-
-    Each response may contain multiple results, and each result may contain
-    multiple alternatives; for details, see https://goo.gl/tjCPAU.  Here we
-    print only the transcription for the top alternative of the top result.
-
-    In this case, responses are provided for interim results as well. If the
-    response is an interim one, print a line feed at the end of it, to allow
-    the next result to overwrite it, until the response is a final one. For the
-    final one, print a newline to preserve the finalized transcription.
-    """
-    num_chars_printed = 0
-    WORD_COUNT = 0
-    cur_bad_words = {}
-    total_bad_words = {}
-    start = time.time()
-    old_start = time.time()
-    words = 0
-    old_words = 0
-
-    for word in WORD_LIST:
-        cur_bad_words[word] = 0
-        total_bad_words[word] = 0
-    for response in responses:
-        if not response.results:
-            continue
-
-        # The `results` list is consecutive. For streaming, we only care about
-        # the first result being considered, since once it's `is_final`, it
-        # moves on to considering the next utterance.
-        result = response.results[0]
-        if not result.alternatives:
-            continue
-
-        # Display the transcription of the top alternative.
-        transcript = result.alternatives[0].transcript
-
-        # Display interim results, but with a carriage return at the end of the
-        # line, so subsequent lines will overwrite them.
-        #
-        # If the previous result was longer than this one, we need to print
-        # some extra spaces to overwrite the previous result
-        overwrite_chars = ' ' * (num_chars_printed - len(transcript))
-
-        # In the middle on a sentence
-        if not result.is_final:
-            sys.stdout.write(transcript + overwrite_chars + '\r')
-            sys.stdout.flush()
+    start_stream = threading.Thread.start  # an alias for starting thread
 
 
-            num_chars_printed = len(transcript)
-            for word in WORD_LIST:
-                cur_bad_words[word] = transcript.count(word)
+    def get_wpm(self):
+        with self.lock:
+            print (self.wpm)
+            return self.wpm
 
-            words = len(transcript.split(' '))
-            total_time = time.time() - old_start
-            total_words = words + old_words
+    def get_crutch(self):
+        with self.lock:
+            return self.crutch
 
-            wpm = total_words / (total_time / 60)
+    def get_transcript(self):
+        with self.lock:
+            return self.t
 
-            print(wpm)
+    def run(self):
 
-        # End of sentence
-        else:
-            old_words = words
-            old_start = start
-            start = time.time()
-            # append cur_bad_words to bad_words
-            for key, value in cur_bad_words.items():
-                total_bad_words[key] += value
 
-            print(transcript + overwrite_chars)
+            # See http://g.co/cloud/speech/docs/languages
+        # for a list of supported languages.
+        language_code = 'en-US'  # a BCP-47 language tag
 
-            # Exit recognition if any of the transcribed phrases could be
-            # one of our keywords.
-            if re.search(r'\b(exit|quit)\b', transcript, re.I):
-                print('Exiting..')
-                break
-            # if re.search(r'\b(like|um|oz|ah)\b', transcript, re.I):
-            #     WORD_COUNT += 1
-            #     print(WORD_COUNT)
+        client = speech.SpeechClient()
+        config = types.RecognitionConfig(
+            encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
+            sample_rate_hertz=RATE,
+            language_code=language_code)
+        streaming_config = types.StreamingRecognitionConfig(
+            config=config,
+            interim_results=True)
 
-            # for word in WORD_LIST:
-            #     if word in transcript:
-            #         WORD_COUNT += 1
-            #         print(WORD_COUNT)
+        with MicrophoneStream(RATE, CHUNK) as stream:
+            audio_generator = stream.generator()
+            requests = (types.StreamingRecognizeRequest(audio_content=content)
+                        for content in audio_generator)
 
-                # if word in transcript:
-                #     bad_words[word] += 1
-                #     WORD_COUNT += 1
-                #     print(word.upper())
-                #     print (WORD_COUNT)
+            responses = client.streaming_recognize(streaming_config, requests)
+
+            # Now, put the transcription responses to use.
 
             num_chars_printed = 0
-    print(total_bad_words)
-    for m in total_bad_words.values():
-        WORD_COUNT += m
-    print(WORD_COUNT)
-    return wpm
+            WORD_COUNT = 0
+            cur_bad_words = {}
+            total_bad_words = {}
+            start = time.time()
+            old_start = time.time()
+            words = 0
+            old_words = 0
+
+            for word in WORD_LIST:
+                cur_bad_words[word] = 0
+                total_bad_words[word] = 0
+            try:
+                for response in responses:
+                    if not response.results:
+                        continue
+
+                    # The `results` list is consecutive. For streaming, we only care about
+                    # the first result being considered, since once it's `is_final`, it
+                    # moves on to considering the next utterance.
+                    result = response.results[0]
+                    if not result.alternatives:
+                        continue
+
+                    # Display the transcription of the top alternative.
+                    transcript = result.alternatives[0].transcript
+
+                    # Display interim results, but with a carriage return at the end of the
+                    # line, so subsequent lines will overwrite them.
+                    #
+                    # If the previous result was longer than this one, we need to print
+                    # some extra spaces to overwrite the previous result
+                    overwrite_chars = ' ' * (num_chars_printed - len(transcript))
+
+                    # In the middle on a sentence
+                    if not result.is_final:
+                        sys.stdout.write(transcript + overwrite_chars + '\r')
+                        sys.stdout.flush()
 
 
-def main():
+                        num_chars_printed = len(transcript)
+                        for word in WORD_LIST:
+                            cur_bad_words[word] = transcript.count(word) + total_bad_words[word]
 
-    # See http://g.co/cloud/speech/docs/languages
-    # for a list of supported languages.
-    language_code = 'en-US'  # a BCP-47 language tag
+                        words = len(transcript.split(' '))
+                        total_time = time.time() - old_start
+                        total_words = words + old_words
 
-    client = speech.SpeechClient()
-    config = types.RecognitionConfig(
-        encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=RATE,
-        language_code=language_code)
-    streaming_config = types.StreamingRecognitionConfig(
-        config=config,
-        interim_results=True)
+                        
+                        with self.lock:
+                            self.wpm =  total_words / (total_time / 60)
+                            self.t = transcript
+                            self.crutch = cur_bad_words
 
-    with MicrophoneStream(RATE, CHUNK) as stream:
-        audio_generator = stream.generator()
-        requests = (types.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator)
+                    # End of sentence
+                    else:
+                        old_words = words
+                        old_start = start
+                        start = time.time()
+                        total_bad_words = cur_bad_words
 
-        responses = client.streaming_recognize(streaming_config, requests)
-
-        # Now, put the transcription responses to use.
-        listen_print_loop(responses)
+            except:
+                pass
 
 
-if __name__ == '__main__':
-    main()

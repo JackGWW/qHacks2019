@@ -45,9 +45,10 @@ def stop():
 @app.route('/video_stream')
 def video_stream():
 	# Create video stream 
-	return Response(video.main(), mimetype='multipart/x-mixed-replace; boundary=frame')
+	return Response(video_generator, mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+video_generator = video.main()
 if __name__ == '__main__':
     app.run(debug=True)
  

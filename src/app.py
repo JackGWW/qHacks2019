@@ -1,10 +1,12 @@
 # system imports
 import threading
 import os
+import sys
+import subprocess as sp
 
 # local imports
 import video
-import audio
+import audioStream
 
 # 3rd party imports
 from flask import Flask, Response, render_template

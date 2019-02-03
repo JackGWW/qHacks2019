@@ -16,7 +16,7 @@ import threading
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"C:\Users\jackw\Documents\GitHub\qHacks2019\src\gcpcredentialsnaylor.json"
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r"/Users/jnaylor/Documents/QHacks2019Local/gcpcredentialsnaylor.json"
 
 WORD_LIST = ['like', ' so', ' you know', ' basically', ' cuz', 'things', 'stuff', 'yeah']
 

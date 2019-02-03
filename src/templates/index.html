@@ -1,10 +1,88 @@
-<html>
-  <title>SpeakEasy</title>
-  <head>
-    <title>Video Streaming Demonstration</title>
-  </head>
-  <body>
-    <h1>Video Streaming Demonstration</h1>
-    <img src="{{ url_for('video_stream') }}">
-  </body>
-</html>
+{% extends "bootstrap/base.html" %}
+{% block title %}SpeakEasy{% endblock %}
+
+
+{% block navbar %}
+<div class="container">
+  <nav class="navbar navbar-dark bg-primary navbar-fixed-top">
+     <h1>SpeakEasy</h1>
+  </nav>
+</div>
+
+{% endblock %}
+
+
+{% block content %}
+    <body onload="init()">
+
+
+    <button type="button" class="btn btn-success" onclick="startThreads()">START</button>
+    <button type="button" class="btn btn-danger" onclick="stopThreads()">STOP</button>
+
+    {# COMMENTED OUT <img src="{{ url_for('video_stream') }}"> #}
+  
+    <svg preserveAspectRatio="none" id="visualizer" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <defs>
+
+                <mask id="mask">
+                    <g id="maskGroup">
+                  </g>
+                </mask>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style="stop-color:#cce6ff;stop-opacity:1" />
+                    <stop offset="20%" style="stop-color:#a366ff;stop-opacity:1" />
+                    <stop offset="90%" style="stop-color:#4da6ff;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#66ffff;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect x="0" y="-2" width="30%" height="30%" fill="url(#gradient)" mask="url(#mask)"></rect>
+        </svg>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  function startThreads() {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            console.log(xhr.response);
+        }
+    }
+    xhr.open('POST', 'http://localhost:5000/start');
+    xhr.send();
+  }
+</script>
+<script>
+ function stopThreads() {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            console.log(xhr.response);
+        }
+    }
+    xhr.open('POST', 'http://localhost:5000/stop');
+    xhr.send();
+  }
+</script>
+<script>
+ function init() {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            console.log(xhr.response);
+        }
+    }
+    xhr.open('POST', 'http://localhost:5000/init');
+    xhr.send();
+  }
+</script>
+{% endblock %}
+
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet"
+      href="{{url_for('.static', filename='navbar.css')}}">
+{% endblock %}

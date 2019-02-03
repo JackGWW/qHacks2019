@@ -23,7 +23,10 @@ bootstrap = Bootstrap(app)
 # crutch_queue = queue.Queue(maxsize=0)
 wpm = 0
 transcript = ''
+WORD_LIST = ['like', ' so', ' you know', 'basically', ' cuz', 'things', 'stuff', 'yeah']
 crutch = {}
+for word in WORD_LIST:
+    crutch[word] = 0
 movement = 0
 
 def audio_thread():

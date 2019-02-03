@@ -172,7 +172,13 @@ def main():
                 if (fps > 0):
                     detector_utils.draw_fps_on_image("FPS : " + str(int(fps)),
                                                      output_frame)
-                cv2.imshow('Multi-Threaded Detection', output_frame)
+                # cv2.imshow('Multi-Threaded Detection', output_frame)
+                ret, jpeg = cv2.imencode('.jpg', output_frame)
+                jbytes = jpeg.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + jbytes + b'\r\n\r\n')
+
+
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
             else:

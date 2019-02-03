@@ -15,6 +15,11 @@ import audioStream
 from flask import Flask, Response, render_template, request, jsonify
 from flask_bootstrap import Bootstrap
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+
 app = Flask(__name__)
 bootstrap = Bootstrap(app)
 
@@ -32,6 +37,7 @@ movement = 0
 def audio_thread():
 
     time.sleep(10)
+    print("Starting Processing Audio")
     # wpm_queue.put(-1)
     # transcript_queue.put(-1)
     # crutch_queue.put(-1)
@@ -46,6 +52,7 @@ def audio_thread():
         # crutch_queue.put(ag.get_crutch())
         crutch = ag.get_crutch()
         transcript = ag.get_transcript()
+        print("WPM:{}  Transcript:{}".format(wpm, transcript))
         # transcript_queue.put(ag.get_transcript())
         time.sleep(0.2)
 
@@ -76,7 +83,7 @@ def get_wpm():
 @app.route('/api/transcript')
 def get_transcript():
     global transcript
-    print("T:{}".format(transcript))
+    # print("T:{}".format(transcript))
     return jsonify({'transcript': transcript})
 
 
@@ -90,7 +97,7 @@ def get_crutch():
 def get_movement():
     global movement
     movement = random.randint(0, 100)
-    print("M: {}".format(movement))
+    # print("M: {}".format(movement))
     return jsonify({'movement':movement})
 
 
@@ -105,7 +112,7 @@ def init():
     at = threading.Thread(target=audio_thread)
     if not at.isAlive():
         at.start()
-        print("Startng at")
+        print("Startng Audio Thread")
 
     # vt = threading.Thread(target=video_thread)
     # if not vt.isAlive():

@@ -1,0 +1,61 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.navbar {
+	width: 100%;
+}
+
+.big-container {
+  display: flex;
+  align-content: space-around;
+  justify-content: space-around;
+  flex-flow: row;
+  height: 80%;
+}
+
+.white-space {
+  flex-grow: 3
+}
+
+.live-bars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  flex-grow: 2.5
+}
+
+.footer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-content: center;
+}
+
+.ldBar {
+  width: 90% !important;
+  height: 100%;
+}
+
+.ldBar svg {
+  width: 90% !important;
+  height: 100%;
+}
+
+.bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-content: center;
+  width: 100%;
+}
+
+.bar img {
+  max-width: 100px;
+  max-height: 100px;
+  align-self: left;
+}

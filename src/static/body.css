@@ -1,0 +1,12 @@
+h1{
+	background-color: white;
+	position: absolute;
+	height:600px;
+	width: 100%;
+	font: 24px;
+}
+body{
+	position: relative;
+	top: 600px;
+	background-color: pink;
+}

@@ -31,6 +31,7 @@ def init():
 @app.route('/start', methods=['POST'])
 def start():
     # tell threads to start sending new data
+    
 	print("Starting processing")
 	return "Started processing"
 

@@ -4,8 +4,8 @@
 
 {% block navbar %}
 <div class="container">
-  <nav class="navbar navbar-dark bg-primary navbar-fixed-top">
-     <h1>SpeakEasy</h1>
+  <nav class="navbar navbar-dark bg-primary navbar-fixed-top" style="background-color: #080957;"> 
+  <img class="navbar-left center" src="{{url_for('.static', filename='nav_logo.png')}}">
   </nav>
 </div>
 
@@ -13,30 +13,17 @@
 
 
 {% block content %}
-    <body onload="init()">
-
-
-    <button type="button" class="btn btn-success" onclick="startThreads()">START</button>
-    <button type="button" class="btn btn-danger" onclick="stopThreads()">STOP</button>
-
+  <body onload="init()">
+  <div class="card" style="width: 18rem;">
+    <img class="card-img-top" src="{{url_for('.static', filename='video.png')}}" alt="Card image cap">
+    <div class="card-body">
+      <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+      <button type="button" class="btn btn-success" onclick="startThreads()">START</button>
+      <button type="button" class="btn btn-danger" onclick="stopThreads()">STOP</button>
+    </div>
+  </div>
+    <img class="center" src=">
     {# COMMENTED OUT <img src="{{ url_for('video_stream') }}"> #}
-  
-    <svg preserveAspectRatio="none" id="visualizer" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-            <defs>
-
-                <mask id="mask">
-                    <g id="maskGroup">
-                  </g>
-                </mask>
-                <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" style="stop-color:#cce6ff;stop-opacity:1" />
-                    <stop offset="20%" style="stop-color:#a366ff;stop-opacity:1" />
-                    <stop offset="90%" style="stop-color:#4da6ff;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#66ffff;stop-opacity:1" />
-                </linearGradient>
-            </defs>
-            <rect x="0" y="-2" width="30%" height="30%" fill="url(#gradient)" mask="url(#mask)"></rect>
-        </svg>
 
 {% endblock %}
 

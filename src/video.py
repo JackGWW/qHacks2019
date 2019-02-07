@@ -30,7 +30,6 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
     old_centers = [None] * cap_params["num_hands_detect"]
     centers = [None] * cap_params["num_hands_detect"]
     while True:
-        #print("> ===== in worker loop, frame ", frame_processed)
         frame = input_q.get()
         if (frame is not None):
             # Actual detection. Variable boxes contains the bounding box cordinates for hands detected,
@@ -40,7 +39,7 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
             boxes, scores = detector_utils.detect_objects(
                 frame, detection_graph, sess)
 
-            # draw bounding boxes
+			# Calculate movement
             if any(centers):
                 # If both hands detected
                 if all(old_centers) and all(centers):
@@ -54,7 +53,7 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
 
                     moved = min(moved1, moved2)
 
-                # Try to match hand movement to closest hand postion before
+                # Try to match hand movement to closest previous hand postion
                 else:
                     moved1 = calculate_movement(old_centers[0], centers[0])
                     
@@ -79,6 +78,7 @@ def worker(input_q, output_q, cap_params, frame_processed, movement, movement_th
                 
                 old_centers = centers
             
+            # draw bounding boxes
             centers = detector_utils.draw_box_on_image(
                       cap_params["num_hands_detect"], cap_params["score_thresh"],
                       scores, boxes, cap_params['im_width'], cap_params['im_height'],
@@ -172,12 +172,11 @@ def main():
                 if (fps > 0):
                     detector_utils.draw_fps_on_image("FPS : " + str(int(fps)),
                                                      output_frame)
-                # cv2.imshow('Multi-Threaded Detection', output_frame)
-                ret, jpeg = cv2.imencode('.jpg', output_frame)
-                jbytes = jpeg.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + jbytes + b'\r\n\r\n')
-
+                cv2.imshow('Multi-Threaded Detection', output_frame)
+                # ret, jpeg = cv2.imencode('.jpg', output_frame)
+                # jbytes = jpeg.tobytes()
+                # yield (b'--frame\r\n'
+                #       b'Content-Type: image/jpeg\r\n\r\n' + jbytes + b'\r\n\r\n')
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
